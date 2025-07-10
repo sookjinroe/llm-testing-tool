@@ -33,12 +33,18 @@ temp_test_tool_ui_svelte/
 - [x] `src/` 폴더를 `frontend/src/`로 이동
 - [x] `backend/` 폴더 생성
 - [x] 기존 설정 파일들 `frontend/`로 이동
+- 커밋 해시: 125febb
+- 커밋 메시지: 1단계: 프로젝트 구조 재구성 및 프론트엔드 분리 완료 (STEP1_BACKEND_SETUP.md 문서화 포함)
+- 커밋 일시: 2025-07-09 19:57:06 +0900
 
-### 2단계: 백엔드 환경 구축
-- [ ] Python 가상환경 생성 (`backend/venv/`)
-- [ ] 가상환경 활성화
-- [ ] 핵심 라이브러리 설치
-- [ ] `requirements.txt` 생성
+### 2단계: 백엔드 환경 구축 ✅ 완료
+- [x] Python 가상환경 생성 (`backend/venv/`)
+- [x] 가상환경 활성화
+- [x] 핵심 라이브러리 설치
+- [x] `requirements.txt` 생성
+- 커밋 해시: (커밋 후 업데이트)
+- 커밋 메시지: 2단계: 백엔드 환경 구축 완료 (Python 가상환경, LangChain + FastAPI 설치)
+- 커밋 일시: (커밋 후 업데이트)
 
 ### 3단계: 기본 FastAPI 앱 구현
 - [ ] `backend/main.py` 생성
