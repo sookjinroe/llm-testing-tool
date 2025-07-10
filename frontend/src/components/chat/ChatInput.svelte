@@ -2,21 +2,25 @@
   import { tick } from 'svelte';
   import { sessionStore } from '../../stores/sessions';
   import type { Session } from '../../stores/sessions';
+  import { sendChatMessage, type ChatRequest, type ChatMessage as ApiChatMessage } from '../../services/api';
   
   export let session: Session;
   export let onMessageSent: () => void = () => {};
   
   let messageInput = '';
   let currentSessionId = session.id;
+  let isStreaming = false;
+  let streamingContent = '';
   
   // 세션이 변경되면 입력창 초기화
   $: if (session.id !== currentSessionId) {
     messageInput = '';
     currentSessionId = session.id;
+    streamingContent = '';
   }
   
   async function sendMessage() {
-    if (!messageInput.trim() || !session || session.isLoading) return;
+    if (!messageInput.trim() || !session || session.isLoading || isStreaming) return;
     
     const userMessage = messageInput.trim();
     const sessionId = session.id;
@@ -33,18 +37,70 @@
     
     onMessageSent();
     
-    // Simulate AI response (replace with actual API call)
+    // 실제 API 호출
     sessionStore.updateSessionLoadingState(sessionId, true);
+    isStreaming = true;
+    streamingContent = '';
     
-    setTimeout(() => {
-      sessionStore.addMessage(sessionId, {
-        role: 'assistant',
-        content: `이것은 "${userMessage}"에 대한 시뮬레이션된 응답입니다. 실제 구현에서는 여기에 LLM API 호출이 들어갑니다.`
+    try {
+      // API 요청 데이터 준비 - 현재 세션의 메시지 + 새로 추가된 사용자 메시지
+      const currentMessages = session.messages.map(msg => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content
+      }));
+      
+      // 새로 추가된 사용자 메시지도 포함
+      currentMessages.push({
+        role: 'user',
+        content: userMessage
       });
       
+      const request: ChatRequest = {
+        messages: currentMessages,
+        model: session.settings.model.model,
+        temperature: session.settings.model.temperature,
+        max_tokens: session.settings.model.maxTokens
+      };
+      
+      // 스트리밍 응답 처리
+      await sendChatMessage(
+        request,
+        // onChunk: 각 청크 처리
+        (chunk) => {
+          streamingContent += chunk.content;
+          // 실시간으로 메시지 업데이트 (스트리밍 중)
+          sessionStore.updateStreamingMessage(sessionId, streamingContent);
+          onMessageSent();
+        },
+        // onError: 에러 처리
+        (error) => {
+          console.error('API 호출 오류:', error);
+          sessionStore.addMessage(sessionId, {
+            role: 'assistant',
+            content: `오류가 발생했습니다: ${error.detail}`
+          });
+          sessionStore.updateSessionLoadingState(sessionId, false);
+          onMessageSent();
+        },
+        // onComplete: 완료 처리
+        () => {
+          // 스트리밍 완료 시 로딩 상태만 해제 (메시지는 이미 updateStreamingMessage에서 추가됨)
+          sessionStore.updateSessionLoadingState(sessionId, false);
+          streamingContent = '';
+          onMessageSent();
+        }
+      );
+    } catch (error) {
+      console.error('메시지 전송 오류:', error);
+      sessionStore.addMessage(sessionId, {
+        role: 'assistant',
+        content: '메시지 전송 중 오류가 발생했습니다.'
+      });
       sessionStore.updateSessionLoadingState(sessionId, false);
       onMessageSent();
-    }, 1000 + Math.random() * 2000);
+    } finally {
+      isStreaming = false;
+    }
   }
   
   // 줄바꿈만 차단 (keydown)

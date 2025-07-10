@@ -85,7 +85,7 @@ export const sessionStore = {
   
   createNewSession: () => {
     const newDraftSession: Session = {
-      id: crypto.randomUUID(),
+      id: Math.random().toString(36).substr(2, 9),
       title: '새 대화',
       messages: [],
       settings: JSON.parse(JSON.stringify(defaultSettings)), // Deep copy of default settings
@@ -106,7 +106,7 @@ export const sessionStore = {
   addMessage: (sessionId: string, message: Omit<Message, 'id' | 'timestamp'>) => {
     const newMessage: Message = {
       ...message,
-      id: crypto.randomUUID(),
+      id: Math.random().toString(36).substr(2, 9),
       timestamp: new Date()
     };
     
@@ -190,6 +190,73 @@ export const sessionStore = {
     sessionsStore.update(sessions => 
       sessions.map(s => s.id === sessionId ? { ...s, isLoading: loading } : s)
     );
+  },
+  
+  // 스트리밍 중인 메시지 실시간 업데이트
+  updateStreamingMessage: (sessionId: string, content: string) => {
+    // 초안 세션 스트리밍 메시지 업데이트
+    draftSession.update(draft => {
+      if (draft && draft.id === sessionId) {
+        const updatedMessages = [...draft.messages];
+        const lastMessage = updatedMessages[updatedMessages.length - 1];
+        
+        if (lastMessage && lastMessage.role === 'assistant') {
+          // 마지막 assistant 메시지 업데이트
+          updatedMessages[updatedMessages.length - 1] = {
+            ...lastMessage,
+            content: content
+          };
+        } else {
+          // 새로운 assistant 메시지 생성
+          updatedMessages.push({
+            id: Math.random().toString(36).substr(2, 9),
+            role: 'assistant',
+            content: content,
+            timestamp: new Date()
+          });
+        }
+        
+        return {
+          ...draft,
+          messages: updatedMessages,
+          updatedAt: new Date()
+        };
+      }
+      return draft;
+    });
+    
+    // 일반 세션 스트리밍 메시지 업데이트
+    sessionsStore.update(sessions => {
+      return sessions.map(session => {
+        if (session.id === sessionId) {
+          const updatedMessages = [...session.messages];
+          const lastMessage = updatedMessages[updatedMessages.length - 1];
+          
+          if (lastMessage && lastMessage.role === 'assistant') {
+            // 마지막 assistant 메시지 업데이트
+            updatedMessages[updatedMessages.length - 1] = {
+              ...lastMessage,
+              content: content
+            };
+          } else {
+            // 새로운 assistant 메시지 생성
+            updatedMessages.push({
+              id: Math.random().toString(36).substr(2, 9),
+              role: 'assistant',
+              content: content,
+              timestamp: new Date()
+            });
+          }
+          
+          return {
+            ...session,
+            messages: updatedMessages,
+            updatedAt: new Date()
+          };
+        }
+        return session;
+      });
+    });
   },
   
   // 현재 세션의 설정 업데이트
