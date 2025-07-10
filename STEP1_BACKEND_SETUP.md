@@ -119,7 +119,22 @@ npm run dev
 - [x] 개발 서버가 정상 실행됨 (포트 5173)
 - [x] npm install 및 의존성 재설치 완료
 
-### 전체 완료 기준 (2-5단계 후)
+### 2단계 완료 기준 ✅
+- [x] Python 가상환경이 backend/venv/에 정상 생성됨
+- [x] 가상환경 활성화 및 pip 명령어 정상 작동
+- [x] 핵심 라이브러리 설치 완료:
+  - FastAPI (0.116.0) - 웹 프레임워크
+  - Uvicorn (0.35.0) - ASGI 서버
+  - LangChain (0.3.26) - LLM 프레임워크
+  - LangChain-OpenAI (0.3.27) - OpenAI 연동
+  - LangChain-Anthropic (0.3.17) - Anthropic 연동
+  - Python-dotenv - 환경변수 관리
+  - Pydantic (2.11.7) - 데이터 검증
+- [x] requirements.txt 파일 생성 및 패키지 목록 저장
+- [x] .gitignore에 Python 가상환경 및 환경변수 파일 제외 설정
+- [x] 모든 패키지 버전 호환성 검토 완료 (안정적)
+
+### 전체 완료 기준 (3-5단계 후)
 - [ ] 백엔드 서버가 8000 포트에서 정상 실행
 - [ ] 프론트엔드에서 `/api/chat-stream` 호출 가능
 - [ ] 간단한 에코 응답이 프론트엔드에 표시
