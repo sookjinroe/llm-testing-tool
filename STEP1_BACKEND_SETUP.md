@@ -42,9 +42,9 @@ temp_test_tool_ui_svelte/
 - [x] 가상환경 활성화
 - [x] 핵심 라이브러리 설치
 - [x] `requirements.txt` 생성
-- 커밋 해시: (커밋 후 업데이트)
+- 커밋 해시: 9d8c26c
 - 커밋 메시지: 2단계: 백엔드 환경 구축 완료 (Python 가상환경, LangChain + FastAPI 설치)
-- 커밋 일시: (커밋 후 업데이트)
+- 커밋 일시: 2025-07-09 20:30:00 +0900
 
 ### 3단계: 기본 FastAPI 앱 구현
 - [ ] `backend/main.py` 생성
