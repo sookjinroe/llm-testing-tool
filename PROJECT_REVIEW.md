@@ -3,9 +3,9 @@
 ## 📋 프로젝트 개요
 
 - **프로젝트명**: `llm-testing-tool`
-- **프로젝트 타입**: Svelte + TypeScript + Vite 기반 웹 애플리케이션
+- **프로젝트 타입**: Svelte + TypeScript + Vite 기반 프론트엔드 + FastAPI 기반 백엔드
 - **목적**: LLM 테스팅 도구 (3-패널 레이아웃)
-- **검토 일자**: 2024년 7월 9일
+- **검토 일자**: 2024년 7월 9일 (백엔드 구축 완료: 2024년 7월 10일)
 
 ## 🎯 현재 프로젝트 상태 분석
 
@@ -48,19 +48,52 @@
 - UI 컴포넌트만 구현
 - 실제 설정 저장/로드 기능 미구현
 
+### ✅ 새로 구현된 기능 (2024년 7월 10일)
+
+#### 1. **백엔드 서버 구축**
+- FastAPI 기반 백엔드 서버 (포트 8000)
+- LangChain + 벤더 SDK 설치 및 설정
+- Python 가상환경 구성
+- 환경변수 관리 시스템
+
+#### 2. **API 엔드포인트 구현**
+- `GET /` - 루트 엔드포인트
+- `GET /health` - 헬스 체크
+- `GET /api/config` - 서버 설정 정보
+- `POST /api/chat-stream` - 채팅 스트리밍 (Server-Sent Events)
+
+#### 3. **프론트엔드-백엔드 연동**
+- Vite proxy 설정으로 API 연결
+- API 서비스 모듈 생성 (`src/services/api.ts`)
+- 스트리밍 응답 처리 구현
+- 에러 핸들링 및 로딩 상태 연동
+
+### ⚠️ 부분 구현된 기능
+
+#### 1. **실제 LLM API 연동**
+- 백엔드 구조는 완성되었으나 실제 OpenAI/Anthropic API 연동은 미구현
+- 현재는 에코 응답으로 테스트 중
+
+#### 2. **프로젝트 뷰**
+- 기본 UI 구조만 존재
+- 실제 프로젝트 관리 기능 미구현
+
+#### 3. **라이브러리 뷰**
+- 기본 UI 구조만 존재
+- 실제 라이브러리 관리 기능 미구현
+
+#### 4. **설정 패널**
+- UI 컴포넌트만 구현
+- 실제 설정 저장/로드 기능 미구현
+
 ### ❌ 미구현 기능
 
-#### 1. **LLM API 연동**
-- 실제 AI 모델과의 통신 기능
-- API 키 관리
-- 응답 스트리밍
-
-#### 2. **데이터 영속성**
+#### 1. **데이터 영속성**
 - 로컬 스토리지 연동
 - 세션 데이터 저장/복원
 - 설정 데이터 영속화
 
-#### 3. **고급 기능**
+#### 2. **고급 기능**
 - 프로젝트 관리
 - 라이브러리 관리
 - 템플릿 시스템
@@ -68,7 +101,7 @@
 
 ## 🛠️ 기술 스택 분석
 
-### 현재 사용 중인 기술
+### 프론트엔드 기술
 
 | 기술 | 버전 | 상태 |
 |------|------|------|
@@ -76,6 +109,18 @@
 | **TypeScript** | 5.8.3 | ✅ 최신 |
 | **Vite** | 5.4.19 | ✅ 안정적 (Vite 7+는 별도 계획) |
 | **Node.js** | 18.19.0 | ✅ 안정적 |
+
+### 백엔드 기술 (2024년 7월 10일 추가)
+
+| 기술 | 버전 | 상태 |
+|------|------|------|
+| **FastAPI** | 0.116.0 | ✅ 최신 |
+| **Uvicorn** | 0.35.0 | ✅ ASGI 서버 |
+| **LangChain** | 0.3.26 | ✅ LLM 프레임워크 |
+| **LangChain-OpenAI** | 0.3.27 | ✅ OpenAI 연동 |
+| **LangChain-Anthropic** | 0.3.17 | ✅ Anthropic 연동 |
+| **Python** | 3.x | ✅ 가상환경 구성 |
+| **Pydantic** | 2.11.7 | ✅ 데이터 검증 |
 
 ### 개발 의존성
 
@@ -116,12 +161,12 @@ esbuild <=0.24.2 - Moderate severity
 |------|--------|------|
 | **UI/UX** | 80% | 기본 레이아웃과 인터페이스 완성 |
 | **상태 관리** | 70% | Svelte 스토어 기반 상태 관리 구현 |
-| **핵심 기능** | 30% | 채팅 UI는 완성, API 연동 미구현 |
-| **데이터 연동** | 0% | 외부 API 연동 전혀 미구현 |
+| **핵심 기능** | 60% | 채팅 UI 완성, 백엔드 API 연동 완료 |
+| **데이터 연동** | 70% | 백엔드 API 연동 완료, 실제 LLM API는 미구현 |
 | **보안/안정성** | 90% | 기본 보안 설정, 의존성 정리 완료, 보안 취약점 없음 |
 | **테스트** | 0% | 테스트 코드 없음 |
 
-**전체 완성도**: 약 **50-60%** (의존성 정리 완료로 향상)
+**전체 완성도**: 약 **70-75%** (백엔드 구축 및 API 연동 완료로 크게 향상)
 
 ## 🚀 권장 개선 방안
 
@@ -142,14 +187,13 @@ esbuild <=0.24.2 - Moderate severity
 - **Svelte 5 + Vite 7 마이그레이션**: 별도 계획으로 진행
 - **현재 우선순위**: LangChain 기반 LLM API 연동
 
-### 3단계: 기능 구현 (우선순위별) - 2024년 7월 9일 업데이트
+### 3단계: 기능 구현 (우선순위별) - 2024년 7월 10일 업데이트
 
 #### 🔥 최우선 (현재 진행 중)
-1. **LangChain 기반 LLM API 연동**
-   - LangChain 라이브러리 통합
-   - OpenAI, Anthropic, 기타 모델 지원
+1. **실제 LLM API 연동**
+   - 백엔드 구조는 완성되었으므로 실제 OpenAI/Anthropic API 연동만 구현
    - API 키 관리 시스템
-   - 응답 스트리밍 구현
+   - 응답 스트리밍 구현 (현재 에코 응답에서 실제 API 호출로 변경)
    - 에러 처리 및 재시도 로직
 
 #### 높은 우선순위
@@ -181,44 +225,55 @@ esbuild <=0.24.2 - Moderate severity
 
 ```
 temp_test_tool_ui_svelte/
-├── 📄 설정 파일들
-│   ├── package.json          # 프로젝트 메타데이터 및 의존성
-│   ├── vite.config.ts        # Vite 설정
-│   ├── svelte.config.js      # Svelte 설정
-│   ├── tsconfig.json         # TypeScript 설정 (메인)
-│   ├── tsconfig.node.json    # TypeScript 설정 (Node.js용)
-│   ├── index.html            # 진입점 HTML
-│   └── .gitignore            # Git 무시 파일 목록
-│
-├── 📁 src/                   # 소스 코드
-│   ├── main.ts              # 애플리케이션 진입점
-│   ├── App.svelte           # 메인 앱 컴포넌트 (262줄)
-│   ├── app.css              # 전역 스타일 (256줄)
-│   ├── vite-env.d.ts        # Vite 타입 정의
+├── 📁 frontend/             # 프론트엔드 (Svelte + TypeScript + Vite)
+│   ├── 📄 설정 파일들
+│   │   ├── package.json          # 프로젝트 메타데이터 및 의존성
+│   │   ├── vite.config.ts        # Vite 설정 (프록시 포함)
+│   │   ├── svelte.config.js      # Svelte 설정
+│   │   ├── tsconfig.json         # TypeScript 설정 (메인)
+│   │   ├── tsconfig.node.json    # TypeScript 설정 (Node.js용)
+│   │   ├── index.html            # 진입점 HTML
+│   │   └── .gitignore            # Git 무시 파일 목록
 │   │
-│   ├── 📁 components/       # 컴포넌트들
-│   │   ├── 📁 chat/         # 채팅 관련 컴포넌트
-│   │   │   ├── ChatArea.svelte (81줄)
-│   │   │   ├── ChatInput.svelte (164줄)
-│   │   │   ├── ChatMessages.svelte (146줄)
-│   │   │   ├── ChatView.svelte (172줄)
-│   │   │   └── SettingsPanel.svelte (532줄)
-│   │   ├── SessionHistory.svelte (149줄)
-│   │   ├── ProjectView.svelte (80줄)
-│   │   ├── LibraryView.svelte (80줄)
-│   │   └── Counter.svelte (10줄)
+│   ├── 📁 src/                   # 소스 코드
+│   │   ├── main.ts              # 애플리케이션 진입점
+│   │   ├── App.svelte           # 메인 앱 컴포넌트 (262줄)
+│   │   ├── app.css              # 전역 스타일 (256줄)
+│   │   ├── vite-env.d.ts        # Vite 타입 정의
+│   │   │
+│   │   ├── 📁 components/       # 컴포넌트들
+│   │   │   ├── 📁 chat/         # 채팅 관련 컴포넌트
+│   │   │   │   ├── ChatArea.svelte (81줄)
+│   │   │   │   ├── ChatInput.svelte (164줄)
+│   │   │   │   ├── ChatMessages.svelte (146줄)
+│   │   │   │   ├── ChatView.svelte (172줄)
+│   │   │   │   └── SettingsPanel.svelte (532줄)
+│   │   │   ├── SessionHistory.svelte (149줄)
+│   │   │   ├── ProjectView.svelte (80줄)
+│   │   │   ├── LibraryView.svelte (80줄)
+│   │   │   └── Counter.svelte (10줄)
+│   │   │
+│   │   ├── 📁 stores/           # 상태 관리
+│   │   │   └── sessions.ts      # 세션 스토어 (298줄)
+│   │   │
+│   │   ├── 📁 services/         # API 서비스 (새로 추가)
+│   │   │   └── api.ts           # 백엔드 API 연동 모듈
+│   │   │
+│   │   └── 📁 assets/           # 정적 자산
+│   │       └── svelte.svg
 │   │
-│   ├── 📁 stores/           # 상태 관리
-│   │   └── sessions.ts      # 세션 스토어 (298줄)
+│   ├── 📁 public/               # 공개 정적 파일
+│   │   └── vite.svg
 │   │
-│   └── 📁 assets/           # 정적 자산
-│       └── svelte.svg
+│   └── 📁 node_modules/         # 의존성 패키지들
 │
-├── 📁 public/               # 공개 정적 파일
-│   └── vite.svg
+├── 📁 backend/              # 백엔드 (FastAPI + Python)
+│   ├── main.py              # FastAPI 앱 메인 파일
+│   ├── requirements.txt     # Python 의존성
+│   ├── .env                 # 환경변수 (API 키 등)
+│   └── 📁 venv/             # Python 가상환경
 │
-├── 📁 node_modules/         # 의존성 패키지들
-├── 📁 .bolt/                # Bolt 생성 도구 설정 (불필요)
+├── 📄 .gitignore            # Git 무시 파일 목록
 └── 📁 .git/                 # Git 저장소
 ```
 
@@ -247,18 +302,20 @@ temp_test_tool_ui_svelte/
 2. **🔥 LangChain 기반 LLM API 연동 구현** (진행 예정)
 3. **데이터 영속성 추가**
 
-### 다음 단계 (2024년 7월 9일 업데이트)
+### 다음 단계 (2024년 7월 10일 업데이트)
 1. **✅ 완료**: 환경 안정화 (의존성 정리, 패키지 매니저 통일, 보안 강화)
-2. **🔥 최우선**: LangChain 기반 LLM API 연동 구현
-3. **단기**: 데이터 영속성 및 설정 저장/로드 구현
-4. **중기**: 프로젝트 관리 및 라이브러리 기능 구현
-5. **장기**: Svelte 5 + Vite 7 마이그레이션 및 성능 최적화 (별도 계획)
+2. **✅ 완료**: 백엔드 구축 (FastAPI, LangChain, Python 가상환경)
+3. **✅ 완료**: 프론트엔드-백엔드 연동 (API 서비스, 스트리밍 응답)
+4. **🔥 최우선**: 실제 LLM API 연동 (OpenAI/Anthropic API 키 연동)
+5. **단기**: 데이터 영속성 및 설정 저장/로드 구현
+6. **중기**: 프로젝트 관리 및 라이브러리 기능 구현
+7. **장기**: Svelte 5 + Vite 7 마이그레이션 및 성능 최적화 (별도 계획)
 
 ## 📝 결론
 
 이 프로젝트는 좋은 기반을 가지고 있으며, 최근 환경 안정화 작업으로 안정성과 보안이 크게 향상되었습니다. 
 
-**현재 우선순위**: LangChain을 활용한 LLM API 연동이 최우선 작업으로, 이를 통해 실제 AI 모델과의 대화 기능을 구현할 예정입니다. Svelte 5 + Vite 7 마이그레이션은 별도 계획으로 진행됩니다.
+**현재 우선순위**: 백엔드 구조와 프론트엔드 연동이 완료되었으므로, 실제 OpenAI/Anthropic API 키 연동이 최우선 작업입니다. 이를 통해 실제 AI 모델과의 대화 기능을 구현할 예정입니다. Svelte 5 + Vite 7 마이그레이션은 별도 계획으로 진행됩니다.
 
 **⚠️ 주의사항**: 의존성 관리 시 npm만 사용하여 패키지 매니저 혼재 문제를 방지해야 합니다. pnpm이나 yarn 사용 시 의존성 충돌이 발생할 수 있습니다.
 
