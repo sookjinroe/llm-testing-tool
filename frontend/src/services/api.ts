@@ -3,15 +3,26 @@
 
 // 타입 정의
 export interface ChatMessage {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
+  timestamp?: Date;
+}
+
+export interface ModelSettings {
+  model: string;
+  temperature: number;
+  max_tokens: number;
+  top_p: number;
+  frequency_penalty: number;
+  presence_penalty: number;
+  stop?: string[];
 }
 
 export interface ChatRequest {
   messages: ChatMessage[];
-  model?: string;
-  temperature?: number;
-  max_tokens?: number;
+  settings: ModelSettings;
+  system_prompt?: string;
+  variables?: Record<string, string>;
 }
 
 export interface ChatResponseChunk {
@@ -61,12 +72,21 @@ export async function sendChatMessage(
   onComplete: () => void
 ): Promise<void> {
   try {
+    // 요청 데이터 준비 (타임스탬프 처리)
+    const requestData = {
+      ...request,
+      messages: request.messages.map(msg => ({
+        ...msg,
+        timestamp: msg.timestamp?.toISOString() || new Date().toISOString()
+      }))
+    };
+
     const response = await fetch(`${API_BASE_URL}/chat-stream`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify(requestData),
     });
 
     if (!response.ok) {
@@ -127,6 +147,27 @@ export async function sendChatMessage(
 // 서버 설정 정보 가져오기
 export async function getServerConfig(): Promise<any> {
   return apiCall('/config');
+}
+
+// 사용 가능한 모델 목록 가져오기
+export async function getAvailableModels(): Promise<any> {
+  return apiCall('/models');
+}
+
+// 변수 추출
+export async function extractVariables(prompt: string): Promise<any> {
+  return apiCall('/extract-variables', {
+    method: 'POST',
+    body: JSON.stringify({ prompt })
+  });
+}
+
+// 변수 검증
+export async function validateVariables(prompt: string, variables: Record<string, string>): Promise<any> {
+  return apiCall('/validate-variables', {
+    method: 'POST',
+    body: JSON.stringify({ prompt, variables })
+  });
 }
 
 // 헬스 체크

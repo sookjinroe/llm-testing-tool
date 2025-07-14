@@ -1,6 +1,8 @@
 <script lang="ts">
   import { currentSession, currentSettings, sessionStore } from '../../stores/sessions';
   import type { Variable, Settings } from '../../stores/sessions';
+  import { getAvailableModels } from '../../services/api';
+  import { onMount } from 'svelte';
   
   export let toggleSettingsPanel: () => void;
   
@@ -8,23 +10,106 @@
   $: settings = $currentSettings;
   
   let showModelParams = false;
+  let availableModels: any[] = [];
+  let modelWarning = '';
+  let rangeWarning = '';
   
-  // 초기 설정값 저장 (변경사항 감지용)
-  let initialSettings: Settings | null = null;
+  // 변경사항 감지 로직 제거 (실시간 적용으로 인해 불필요)
   
-  // 세션이 변경될 때마다 초기 설정값 업데이트
-  $: if (currentSessionData && JSON.stringify(currentSessionData.settings) !== JSON.stringify(initialSettings)) {
-    initialSettings = JSON.parse(JSON.stringify(currentSessionData.settings));
+  // 앱 로드 시 백엔드 API에서 모델 목록과 범위 정보 가져오기
+  onMount(async () => {
+    try {
+      const response = await getAvailableModels();
+      if (response && response.models) {
+        availableModels = Object.keys(response.models).map(modelName => ({
+          value: modelName,
+          label: modelName,
+          provider: response.models[modelName].provider,
+          max_tokens: response.models[modelName].max_tokens,
+          temperature_range: response.models[modelName].temperature_range,
+          description: response.models[modelName].description
+        }));
+      }
+    } catch (error) {
+      console.error('모델 목록 가져오기 실패:', error);
+      // 실패 시 기본 모델 목록 사용
+      availableModels = [
+        { value: 'gpt-4o', label: 'GPT-4o', provider: 'openai', max_tokens: 128000, temperature_range: [0.0, 2.0] },
+        { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', provider: 'anthropic', max_tokens: 200000, temperature_range: [0.0, 1.0] }
+      ];
+    }
+  });
+  
+  // 현재 선택된 모델의 정보 가져오기
+  $: currentModelInfo = availableModels.find(m => m.value === settings.model.model);
+  
+  // 현재 모델의 범위 정보
+  $: temperatureRange = currentModelInfo?.temperature_range || [0.0, 2.0];
+  $: maxTokensLimit = currentModelInfo?.max_tokens || 8192;
+  
+  // 모델 변경 시 지원 여부 확인 및 범위 검증
+  function checkModelSupport(modelName: string) {
+    const isSupported = availableModels.some(model => model.value === modelName);
+    if (!isSupported && availableModels.length > 0) {
+      modelWarning = `지원되지 않는 모델: ${modelName}`;
+    } else {
+      modelWarning = '';
+    }
+    
+    // 범위 검증
+    checkRangeValidation();
   }
   
-  // 변경사항이 있는지 확인
-  $: hasChanges = initialSettings && currentSessionData ? 
-    JSON.stringify(settings) !== JSON.stringify(initialSettings) : false;
+  // 범위 검증 및 경고 표시
+  function checkRangeValidation() {
+    if (!currentModelInfo) return;
+    
+    const warnings = [];
+    
+    // Temperature 범위 검증
+    if (settings.model.temperature < temperatureRange[0] || settings.model.temperature > temperatureRange[1]) {
+      warnings.push(`Temperature는 ${temperatureRange[0]}~${temperatureRange[1]} 범위여야 합니다.`);
+    }
+    
+    // Max Tokens 범위 검증
+    if (settings.model.maxTokens > maxTokensLimit) {
+      warnings.push(`Max Tokens는 ${maxTokensLimit} 이하여야 합니다.`);
+    }
+    
+    rangeWarning = warnings.join(' ');
+  }
+  
+  // 모델 변경 시 범위에 맞춰 값 자동 조정
+  function adjustValuesToRange() {
+    if (!currentModelInfo) return;
+    
+    let hasAdjustment = false;
+    
+    // Temperature 범위 조정
+    if (settings.model.temperature > temperatureRange[1]) {
+      settings.model.temperature = temperatureRange[1];
+      hasAdjustment = true;
+    } else if (settings.model.temperature < temperatureRange[0]) {
+      settings.model.temperature = temperatureRange[0];
+      hasAdjustment = true;
+    }
+    
+    // Max Tokens 범위 조정
+    if (settings.model.maxTokens > maxTokensLimit) {
+      settings.model.maxTokens = maxTokensLimit;
+      hasAdjustment = true;
+    }
+    
+    if (hasAdjustment) {
+      rangeWarning = `값이 ${currentModelInfo.label}의 범위에 맞춰 자동 조정되었습니다.`;
+      setTimeout(() => { rangeWarning = ''; }, 3000); // 3초 후 경고 제거
+    }
+  }
   
   // 프롬프트에서 변수 추출하는 함수
   function extractVariablesFromPrompt(text: string): string[] {
     const regex = /\{\{([^}]+)\}\}/g;
-    const matches = [];
+    const matches: string[] = [];
     let match;
     
     while ((match = regex.exec(text)) !== null) {
@@ -66,20 +151,20 @@
     sessionStore.updateSessionSettings(updater);
   }
   
-  const modelOptions = [
-    { value: 'gpt-4', label: 'GPT-4' },
-    { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
-    { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
-    { value: 'claude-3-opus', label: 'Claude 3 Opus' },
-    { value: 'claude-3-sonnet', label: 'Claude 3 Sonnet' },
-    { value: 'claude-3-haiku', label: 'Claude 3 Haiku' }
-  ];
-  
   function updateModelSetting(key: string, value: any) {
     updateCurrentSettings(s => ({
       ...s,
       model: { ...s.model, [key]: value }
     }));
+    
+    // 모델 변경 시 지원 여부 확인 및 범위 조정
+    if (key === 'model') {
+      checkModelSupport(value);
+      // 모델 변경 후 약간의 지연을 두고 범위 조정 (반응형 업데이트 대기)
+      setTimeout(() => {
+        adjustValuesToRange();
+      }, 100);
+    }
   }
   
   function updateVariable(index: number, field: 'name' | 'value', value: string) {
@@ -98,19 +183,64 @@
     }));
   }
   
-  // 설정 적용
-  function applySettings() {
-    if (currentSessionData && initialSettings) {
-      initialSettings = JSON.parse(JSON.stringify(currentSessionData.settings));
-    }
-    console.log('설정이 적용되었습니다:', settings);
+  // 설정 적용/초기화 함수 제거 (실시간 적용으로 인해 불필요)
+  
+  // 이벤트 핸들러 함수들
+  function handleModelChange(e: Event) {
+    const target = e.target as HTMLSelectElement;
+    updateModelSetting('model', target.value);
   }
   
-  // 설정 초기화
-  function resetSettings() {
-    if (initialSettings && currentSessionData) {
-      updateCurrentSettings(() => JSON.parse(JSON.stringify(initialSettings)));
+  function handleTemperatureChange(e: Event) {
+    const target = e.target as HTMLInputElement;
+    updateModelSetting('temperature', parseFloat(target.value));
+  }
+  
+  // Max Tokens 포커스 아웃 시 처리
+  function handleMaxTokensBlur(e: Event) {
+    const target = e.target as HTMLInputElement;
+    const value = parseInt(target.value) || 1; // 기본값 1
+    
+    // 값 반영
+    updateModelSetting('maxTokens', value);
+    
+    // 포커스 아웃 시 범위 검증 및 자동 조정
+    setTimeout(() => {
+      adjustValuesToRange();
+    }, 0);
+  }
+  
+  // Max Tokens 엔터 키 처리
+  function handleMaxTokensKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      (e.target as HTMLInputElement).blur(); // 포커스 아웃
     }
+  }
+  
+  function handleTopPChange(e: Event) {
+    const target = e.target as HTMLInputElement;
+    updateModelSetting('topP', parseFloat(target.value));
+  }
+  
+  function handleSystemPromptChange(e: Event) {
+    const target = e.target as HTMLTextAreaElement;
+    updateSystemPrompt(target.value);
+  }
+  
+  function handleVariableChange(index: number, field: 'name' | 'value', e: Event) {
+    const target = e.target as HTMLInputElement;
+    updateVariable(index, field, target.value);
+  }
+  
+  // 현재 모델 지원 여부 확인 (반응형)
+  $: if (settings.model.model) {
+    checkModelSupport(settings.model.model);
+  }
+  
+  // 범위 검증 (반응형)
+  $: if (currentModelInfo) {
+    checkRangeValidation();
   }
 </script>
 
@@ -152,39 +282,66 @@
             id="model-select"
             class="select rounded-input"
             value={settings.model.model}
-            on:change={(e) => updateModelSetting('model', e.target.value)}
+            on:change={handleModelChange}
           >
-            {#each modelOptions as option}
+            {#each availableModels as option}
               <option value={option.value}>{option.label}</option>
             {/each}
           </select>
+          {#if modelWarning}
+            <div class="model-warning">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 9v2m0 4h.01M9 10h.01"/>
+              </svg>
+              {modelWarning}
+            </div>
+          {/if}
+          {#if rangeWarning}
+            <div class="range-warning">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 9v2m0 4h.01M9 10h.01"/>
+              </svg>
+              {rangeWarning}
+            </div>
+          {/if}
         </div>
         
         {#if showModelParams}
           <div class="model-params">
             <div class="form-group">
-              <label class="label" for="temperature">Temperature: {settings.model.temperature}</label>
+              <label class="label" for="temperature">
+                Temperature: {settings.model.temperature}
+                {#if currentModelInfo}
+                  <small class="text-muted">({temperatureRange[0]}~{temperatureRange[1]})</small>
+                {/if}
+              </label>
               <input 
                 id="temperature"
                 type="range" 
-                min="0" 
-                max="2" 
+                min={temperatureRange[0]} 
+                max={temperatureRange[1]} 
                 step="0.1"
                 value={settings.model.temperature}
-                on:input={(e) => updateModelSetting('temperature', parseFloat(e.target.value))}
+                on:input={handleTemperatureChange}
                 class="range-input"
               />
             </div>
             
             <div class="form-group">
-              <label class="label" for="max-tokens">Max Tokens</label>
+              <label class="label" for="max-tokens">
+                Max Tokens
+                {#if currentModelInfo}
+                  <small class="text-muted">(최대 {maxTokensLimit.toLocaleString()})</small>
+                {/if}
+              </label>
               <input 
                 id="max-tokens"
                 type="number" 
                 min="1" 
-                max="8192"
+                max={maxTokensLimit}
                 value={settings.model.maxTokens}
-                on:input={(e) => updateModelSetting('maxTokens', parseInt(e.target.value))}
+                on:blur={handleMaxTokensBlur}
+                on:keydown={handleMaxTokensKeydown}
                 class="input rounded-input"
               />
             </div>
@@ -198,7 +355,7 @@
                 max="1" 
                 step="0.1"
                 value={settings.model.topP}
-                on:input={(e) => updateModelSetting('topP', parseFloat(e.target.value))}
+                on:input={handleTopPChange}
                 class="range-input"
               />
             </div>
@@ -221,7 +378,7 @@
             class="input textarea rounded-input"
             placeholder="시스템 프롬프트를 입력하세요... 예: 당신은 &#123;&#123;role&#125;&#125;입니다."
             value={settings.systemPrompt}
-            on:input={(e) => updateSystemPrompt(e.target.value)}
+            on:input={handleSystemPromptChange}
           ></textarea>
         </div>
       </div>
@@ -254,7 +411,7 @@
                   class="input rounded-input"
                   placeholder="값을 입력하세요"
                   value={variable.value}
-                  on:input={(e) => updateVariable(index, 'value', e.target.value)}
+                  on:input={(e) => handleVariableChange(index, 'value', e)}
                 />
               </div>
             {/each}
@@ -263,26 +420,7 @@
       {/if}
     </div>
     
-    <!-- Apply/Reset Buttons (only show when there are changes) -->
-    {#if hasChanges}
-      <div class="settings-actions">
-        <button class="btn rounded-btn" on:click={resetSettings}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1-6.74 2.74L21 8"/>
-            <path d="M21 3v5h-5"/>
-            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-            <path d="M3 21v-5h5"/>
-          </svg>
-          초기화
-        </button>
-        <button class="btn btn-primary rounded-btn" on:click={applySettings}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 6L9 17l-5-5"/>
-          </svg>
-          적용
-        </button>
-      </div>
-    {/if}
+    <!-- 초기화/적용 버튼 제거 (실시간 적용으로 인해 불필요) -->
   {:else}
     <div class="no-session-content">
       <div class="empty-icon">
@@ -489,18 +627,7 @@
     resize: vertical;
   }
 
-  .settings-actions {
-    display: flex;
-    gap: var(--space-2);
-    padding: var(--space-4);
-    border-top: 1px solid var(--vscode-border);
-    background: var(--vscode-bg-secondary);
-    justify-content: flex-end;
-  }
-
-  .settings-actions .btn {
-    min-width: 80px;
-  }
+  /* 초기화/적용 버튼 스타일 제거 (실시간 적용으로 인해 불필요) */
 
   .no-session-content {
     flex: 1;
@@ -528,5 +655,31 @@
   .no-session-content p {
     font-size: 14px;
     color: var(--vscode-text-secondary);
+  }
+
+  .model-warning {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin-top: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    background-color: var(--vscode-warning-bg);
+    color: var(--vscode-warning-fg);
+    border-radius: 6px;
+    border: 1px solid var(--vscode-warning-border);
+    font-size: 12px;
+  }
+  
+  .range-warning {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin-top: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    background-color: var(--vscode-info-bg);
+    color: var(--vscode-info-fg);
+    border-radius: 6px;
+    border: 1px solid var(--vscode-info-border);
+    font-size: 12px;
   }
 </style>

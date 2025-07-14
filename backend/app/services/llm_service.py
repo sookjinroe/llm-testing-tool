@@ -24,81 +24,79 @@ SUPPORTED_MODELS = {
     "gpt-4o": {
         "provider": "openai",
         "model": "gpt-4o",
-        "max_tokens": 128000,
+        "max_tokens": 4096,
         "temperature_range": (0.0, 2.0),
-        "description": "OpenAI 멀티모달 GPT-4o 모델 (최대 128K 토큰)"
+        "description": "OpenAI 멀티모달 GPT-4o (출력 최대 4 K)"
     },
     "gpt-4o-mini": {
         "provider": "openai",
         "model": "gpt-4o-mini",
-        "max_tokens": 128000,
+        "max_tokens": 16384,
         "temperature_range": (0.0, 2.0),
-        "description": "OpenAI 경량 멀티모달 모델 (최대 128K 토큰)"
+        "description": "OpenAI 경량 GPT-4o Mini (출력 최대 16 K)"
     },
     "o3-mini": {
         "provider": "openai",
         "model": "o3-mini",
-        "max_tokens": 128000,
+        "max_tokens": 100000,
         "temperature_range": (0.0, 2.0),
-        "description": "OpenAI 최적화 모델 (최대 128K 토큰)"
+        "description": "OpenAI O3-Mini 추론 특화 (출력 최대 100 K)"
     },
     "gpt-4.5-preview": {
         "provider": "openai",
         "model": "gpt-4.5-preview",
-        "max_tokens": 128000,
+        "max_tokens": 16384,
         "temperature_range": (0.0, 2.0),
-        "description": "OpenAI GPT-4.5 프리뷰 모델 (최대 128K 토큰)"
+        "description": "OpenAI GPT-4.5 프리뷰 (출력 최대 16 K)"
     },
     "gpt-4.1": {
         "provider": "openai",
         "model": "gpt-4.1",
-        "max_tokens": 128000,
+        "max_tokens": 32768,
         "temperature_range": (0.0, 2.0),
-        "description": "OpenAI GPT-4.1 모델 (최대 128K 토큰)"
+        "description": "OpenAI GPT-4.1 플래그십 (출력 최대 32 K)"
     },
     "gpt-4.1-mini": {
         "provider": "openai",
         "model": "gpt-4.1-mini",
-        "max_tokens": 128000,
+        "max_tokens": 32768,
         "temperature_range": (0.0, 2.0),
-        "description": "OpenAI GPT-4.1 미니 모델 (최대 128K 토큰)"
+        "description": "OpenAI GPT-4.1 Mini (출력 최대 32 K)"
     },
-    
-    # Anthropic 모델 (실제 API 조회 결과)
     "claude-opus-4-20250514": {
         "provider": "anthropic",
         "model": "claude-opus-4-20250514",
-        "max_tokens": 200000,
+        "max_tokens": 16000,
         "temperature_range": (0.0, 1.0),
-        "description": "Anthropic Claude 4 Opus (최고 성능, 최대 200K 토큰)"
+        "description": "Anthropic Claude Opus 4 (출력 최대 16 K)"
     },
     "claude-sonnet-4-20250514": {
         "provider": "anthropic",
         "model": "claude-sonnet-4-20250514",
-        "max_tokens": 200000,
+        "max_tokens": 16000,
         "temperature_range": (0.0, 1.0),
-        "description": "Anthropic Claude 4 Sonnet (최대 200K 토큰)"
+        "description": "Anthropic Claude Sonnet 4 (출력 최대 16 K)"
     },
     "claude-3-7-sonnet-20250219": {
         "provider": "anthropic",
         "model": "claude-3-7-sonnet-20250219",
-        "max_tokens": 200000,
+        "max_tokens": 16000,
         "temperature_range": (0.0, 1.0),
-        "description": "Anthropic Claude 3.7 Sonnet (최대 200K 토큰)"
+        "description": "Anthropic Claude 3.7 Sonnet (출력 최대 16 K)"
     },
     "claude-3-5-haiku-20241022": {
         "provider": "anthropic",
         "model": "claude-3-5-haiku-20241022",
-        "max_tokens": 200000,
+        "max_tokens": 10000,
         "temperature_range": (0.0, 1.0),
-        "description": "Anthropic Claude 3.5 Haiku (빠른 응답, 최대 200K 토큰)"
+        "description": "Anthropic Claude 3.5 Haiku (출력 최대 10 K)"
     },
     "claude-3-opus-20240229": {
         "provider": "anthropic",
         "model": "claude-3-opus-20240229",
-        "max_tokens": 200000,
+        "max_tokens": 8000,
         "temperature_range": (0.0, 1.0),
-        "description": "Anthropic Claude 3 Opus (최고 성능, 최대 200K 토큰, 2026년 1월 5일까지 지원)"
+        "description": "Anthropic Claude 3 Opus (출력 최대 8 K)"
     }
 }
 

@@ -40,7 +40,7 @@ export interface Session {
 // Default settings
 export const defaultSettings: Settings = {
   model: {
-    model: 'gpt-4',
+    model: 'gpt-4o',
     temperature: 0.7,
     maxTokens: 2048,
     topP: 1.0,

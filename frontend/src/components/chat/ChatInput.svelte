@@ -57,10 +57,22 @@
       
       const request: ChatRequest = {
         messages: currentMessages,
-        model: session.settings.model.model,
-        temperature: session.settings.model.temperature,
-        max_tokens: session.settings.model.maxTokens
+        settings: {
+          model: session.settings.model.model,
+          temperature: session.settings.model.temperature,
+          max_tokens: session.settings.model.maxTokens,
+          top_p: session.settings.model.topP,
+          frequency_penalty: session.settings.model.frequencyPenalty,
+          presence_penalty: session.settings.model.presencePenalty
+        },
+        system_prompt: session.settings.systemPrompt || undefined,
+        variables: session.settings.variables.length > 0 
+          ? Object.fromEntries(session.settings.variables.map(v => [v.name, v.value]))
+          : undefined
       };
+      
+      // 디버깅: 요청 데이터 로깅
+      console.log('API 요청 데이터:', JSON.stringify(request, null, 2));
       
       // 스트리밍 응답 처리
       await sendChatMessage(
